@@ -1,0 +1,231 @@
+#' ---
+#' title: "Council accounts"
+#' output: html_notebook
+#' ---
+#' 
+#' # Council accounts: comparing estimates vs spend
+#' 
+#' This notebook details the process of downloading, cleaning, and analysing council accounts.
+#' 
+#' The data comes from the Ministry of Housing, Communities & Local Government's [Local authority revenue expenditure and financing collection](https://www.gov.uk/government/collections/local-authority-revenue-expenditure-and-financing)
+#' 
+#' ## Spend vs budget
+#' 
+#' Start with the [revenue outturn summary](https://www.gov.uk/government/statistics/local-authority-revenue-expenditure-and-financing-england-2017-to-2018-individual-local-authority-data-outturn). 
+#' 
+#' The [specific file is here](https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/735627/RS_2017-18_data_by_LA.xlsx). Sheet RS LA Data 2017-18, columns H and I: Children social care and adult social care respectively.
+#' 
+#' Then compare with the [budget](https://www.gov.uk/government/statistics/local-authority-revenue-expenditure-and-financing-england-2017-to-2018-budget-individual-local-authority-data). Specific [spreadsheet here](https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/623097/RA_2017-18_data_by_LA.xlsx). Sheet RA LA Data 2017-18 - Columns AK (Children’s social care) and BD (Adults).
+#' 
+#' Then the difference between them.
+#' 
+#' And then repeat for previous years.
+#' 
+#' [2016-17 outturn](https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/659764/RS_2016-17_data_by_LA.xlsx): Children’s in column H, Adults in column I. 
+#' 
+#' [2016-17 budget](https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/532962/RA_2016-17_data_by_LA.xlsx): Children’s in AJ, Adults in BC
+#' 
+#' [2015-16 outturn](https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/659783/RS_2015-16_data_by_LA_-_Revision.xlsx): Children’s in column H, Adults in column I
+#' 
+#' 
+#' [2015-16 budget](https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/444910/RA_2015-16_data_by_LA_-_Nat_Stats_Release_-_15-Jul-2015.xls): Children’s in Column AJ, Adults in Column BC
+#' 
+#' Let's store those URLs:
+#' 
+## ------------------------------------------------------------------------
+outturn1718url <- "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/735627/RS_2017-18_data_by_LA.xlsx"
+budget1718url <- "https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/623097/RA_2017-18_data_by_LA.xlsx"
+outturn1617url <- "https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/659764/RS_2016-17_data_by_LA.xlsx"
+budget1617url <- "https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/532962/RA_2016-17_data_by_LA.xlsx"
+outturn1516url <- "https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/659783/RS_2015-16_data_by_LA_-_Revision.xlsx"
+budget1516url <- "https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/444910/RA_2015-16_data_by_LA_-_Nat_Stats_Release_-_15-Jul-2015.xls"
+cellrange.outturn <- "H:I"
+cellrange.budget <- "AJ:BC"
+
+#' 
+#' 
+#' ## Breaking down the problem
+#' 
+#' Here are the tasks we need to complete:
+#' 
+#' 1. Download the spreadsheet directly from a URL
+#' 2. Perform basic cleaning (remove redundant rows, combine/clarify headings across multiple cells)
+#' 3. Create a subset containing the data we want to focus on
+#' 4. Perform analysis
+#' 
+#' ## Download the data - 1617
+#' 
+## ------------------------------------------------------------------------
+#Activate the library for handling Excel files, and for calling URLs
+library(readxl)
+library(httr)
+#For 2016-17:
+#Fetch that file and save it locally with a new name
+GET(outturn1617url, write_disk("revenueaccounts1617.xlsx", overwrite = T))
+GET(budget1617url, write_disk("budgetaccounts1617.xlsx", overwrite = T))
+
+#' 
+#' ## Clean the spreadsheet while importing
+#' 
+#' Now to import that, and clean it along the way. There are two problems here: first, the column headers don't start until row 4; and second, those headers are spread across 3 rows.
+#' 
+#' The most detailed headings are in row 7, with related codes for each heading in row 6, and broader categories in row 5. So we skip to row 7 for the main dataset...
+#' 
+## ------------------------------------------------------------------------
+#Activate the dplyr library
+library(dplyr)
+#Read that file into a new data frame
+#We want the 3rd sheet, and to skip the first 6 lines so row 7 is used for headers
+revenueaccounts1617 <- read_excel("revenueaccounts1617.xlsx", sheet = 3, skip = 6, na = "c('-','')") #could add range = cell_cols("A:I") but skip won't work
+budgetaccounts1617 <- read_excel("budgetaccounts1617.xlsx", sheet = 3, skip = 6, na = "c('-','')") #omitted: range = cell_cols(cellrange.budget)
+
+#' 
+#' ...and store the other headings in another data frame just in case.
+#' 
+## ------------------------------------------------------------------------
+#Rows 5 and 6 also contain useful info so we grab those just in case
+#We specify the range because otherwise it skips the blank cells in the first 5 columns
+#An alternative would be to change or remove the n_max so there are some full cells in those first 5 cols
+revenueaccounts1617.otherheads <- read_excel("revenueaccounts1617.xlsx", sheet = 3, skip = 4, n_max = 2) #we set n_max to 2 because otherwise it skips the first 5 empty cells
+#Most of these are empty so we need to copy from the previous cell.
+#Start from index 2 because the i-1 below will generate an error otherwise
+for(i in seq(2,length(revenueaccounts1617.otherheads))){
+  #grab first two characters
+  first2 <- substr(colnames(revenueaccounts1617.otherheads)[i],0,2)
+  #If this is an unnamed column
+  if (first2 == "X_"){
+    #Replace with the name of the previous column
+    colnames(revenueaccounts1617.otherheads)[i] <- colnames(revenueaccounts1617.otherheads)[i-1]
+  }
+}
+
+#' 
+#' 
+#' ## Create a subset
+#' 
+#' There are 247 variables in one spreadsheet, and 99 in the other, so let's narrow down to the ones we want to focus on.
+#' 
+#' We can use regex to find the columns where 'Social' is mentioned:
+#' 
+## ------------------------------------------------------------------------
+#The grepl function is used to generate a series of TRUE/FALSE matches for each column
+#That is then nested within square brackets after the colnames function to show those that are TRUE
+#The (?i) modifier at the start of the regex specifies that we want to be case insensitive, which means we can catch the capital/lower case S at the start and where it is all caps.
+colnames(revenueaccounts1617)[grepl("(?i).*social.*",colnames(revenueaccounts1617))]
+colnames(budgetaccounts1617)[grepl("(?i).*social.*",colnames(budgetaccounts1617))]
+
+#' 
+#' 
+#' Now that we think we have the right columns, let's generate that subset:
+#' 
+## ------------------------------------------------------------------------
+#We remove 'colnames' now so we are accessing the data frame as a whole
+revenueaccounts1617.social <- revenueaccounts1617[grepl("(?i).*social.*",colnames(revenueaccounts1617))]
+#Show the relative otherheads too
+revenueaccounts1617.otherheads[grepl("(?i).*social.*",colnames(revenueaccounts1617))]
+revenueaccounts1617.social.otherheads <- revenueaccounts1617.otherheads[grepl("(?i).*social.*",colnames(revenueaccounts1617))]
+
+#And for budget
+budgetaccounts1617.social <- budgetaccounts1617[grepl("(?i).*social.*",colnames(budgetaccounts1617))]
+
+#' 
+#' And combine with the basic data on name, code etc.
+#' 
+## ------------------------------------------------------------------------
+#Create a subset of just the basic names and codes in the first few columns - we'll probably need this again so useful to save as a separate data frame
+councillist <- revenueaccounts1617[c(1:3,5)]
+councillist.ba <- budgetaccounts1617[c(1:2,4)]
+#Combine the two using cbind
+revenueaccounts1617.social <- cbind(councillist,revenueaccounts1617.social)
+budgetaccounts1617.social <- cbind(councillist.ba,budgetaccounts1617.social)
+
+#' 
+#' We've now gone from 247 variables to 6, which is going to be much easier to deal with.
+#' 
+#' ### Subsetting by type of organisation - revenue accounts
+#' 
+#' We also need to remove all the organisations we don't want. The type of organisation is shown in the 'Class' column:
+#' 
+## ------------------------------------------------------------------------
+table(revenueaccounts1617.social$Class)
+
+#' 
+#' We don't want shire districts (SD), or other authorities such as police or fire (O). 
+#' 
+## ------------------------------------------------------------------------
+revenueaccounts1617.social <- subset(revenueaccounts1617.social, revenueaccounts1617.social$Class != "O" & revenueaccounts1617.social$Class != "SD")
+table(revenueaccounts1617.social$Class)
+
+#' 
+#' This gives us a data frame with 156 rows - 4 more than we might expect. This is because aggregate figures for each type (4 types) are also in the data. 
+#' 
+#' These make up the last 4 rows and have no code:
+#' 
+## ------------------------------------------------------------------------
+#Subset so we only have rows where the code is not NA
+revenueaccounts1617.social <- subset(revenueaccounts1617.social,revenueaccounts1617.social$`E-code` != "NA")
+#Check a table to see each number has gone down by 1
+table(revenueaccounts1617.social$Class)
+
+#' 
+#' 
+#' 
+#' ## Cleaning data types
+#' 
+#' To check if we need more cleaning we can generate a summary:
+#' 
+## ------------------------------------------------------------------------
+summary(revenueaccounts1617.social)
+
+#' 
+#' This indicates that many of the columns have been imported as characters, rather than numeric, most likely because of the presence of dashes.
+#' 
+#' We need to fix this. Let's use the `tidyverse` library and use its `guess_parser` function to see what it thinks of one of the columns:
+#' 
+## ------------------------------------------------------------------------
+library(tidyverse)
+#Guess the first number columns
+guess_parser(revenueaccounts1617.social[,5])
+
+#' 
+#' Now a `summary` to see much the same:
+#' 
+## ------------------------------------------------------------------------
+summary(revenueaccounts1617.social[,6])
+
+#' 
+#' We'll need to parse it instead as a number during any analysis.
+#' 
+## ------------------------------------------------------------------------
+#Replace column with numeric version
+revenueaccounts1617.social[,6] <- parse_number(revenueaccounts1617.social[,6])
+#Sum - this returns NA because we need to subset out the NA
+sum(revenueaccounts1617.social[,6])
+#Table to show frequency of numbers
+table(revenueaccounts1617.social[,6])
+summary(revenueaccounts1617.social[,6])
+
+#' 
+#' Repeat for the other column:
+#' 
+## ------------------------------------------------------------------------
+#Replace column with numeric version
+revenueaccounts1617.social[,5] <- parse_number(revenueaccounts1617.social[,5])
+#Sum - this returns NA because we need to subset out the NA
+sum(revenueaccounts1617.social[,5])
+#Table to show frequency of numbers
+table(revenueaccounts1617.social[,5])
+summary(revenueaccounts1617.social[,5])
+
+#' 
+#' The presence of an NA in the data (Isles of Scilly) prevents us from calculating a sum- We need to subset out the NA to do this.
+#' 
+## ------------------------------------------------------------------------
+forsum <- subset(revenueaccounts1617.social, revenueaccounts1617.social$`Children Social Care` != "NA")
+sum(forsum$`Children Social Care`)
+#Or we can combine the two, removing the need to create a new object
+sum(subset(revenueaccounts1617.social, revenueaccounts1617.social$`Children Social Care` != "NA")$`Children Social Care`)
+
+#' 
+#' ### Subsetting by type of organisation - budget accounts
+#' 

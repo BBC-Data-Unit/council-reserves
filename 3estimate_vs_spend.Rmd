@@ -227,5 +227,9 @@ sum(forsum$`Children Social Care`)
 sum(subset(revenueaccounts1617.social, revenueaccounts1617.social$`Children Social Care` != "NA")$`Children Social Care`)
 ```
 
-### Subsetting by type of organisation - budget accounts
+```{r}
+#Export a pure R script version of this notebook
+knitr::purl("3estimate_vs_spend.Rmd", "3estimate_vs_spend.R", documentation = 2)
+```
+
 

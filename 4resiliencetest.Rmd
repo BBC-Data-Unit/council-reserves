@@ -191,4 +191,7 @@ All of these have 2 NA entries, so let's look at those.
 is.na(rodata.res$`Estimated schools reserves level at 1 April`)
 ```
 
-Now remove those in order to perform calculations:
+```{r}
+#Export a pure R script version of this notebook
+knitr::purl("4resiliencetest.Rmd", "4resiliencetest.R", documentation = 2)
+```
