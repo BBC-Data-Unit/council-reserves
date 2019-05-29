@@ -13,6 +13,9 @@ Croydon Council appeared to have spent more than half of its reserves but said t
 ## Get the data 
 
 * Ministry of Housing, Communities & Local Government: [Local authority revenue expenditure and financing](https://www.gov.uk/government/collections/local-authority-revenue-expenditure-and-financing)
+* CSV: [Unallocated reserves by council, combined](https://github.com/BBC-Data-Unit/council-reserves/blob/master/combined.data-unallocated.csv)
+* CSV: [Council accounts analysis](https://github.com/BBC-Data-Unit/council-reserves/blob/master/councilaccountsanalysis.csv)
+* CSV: [Cut in reserves](https://github.com/BBC-Data-Unit/council-reserves/blob/master/reserves.cut.csv)
 
 ## Quotes and interviews
 
@@ -37,6 +40,11 @@ Croydon Council appeared to have spent more than half of its reserves but said t
 * Bar chart: Councils with the biggest drop in reserves 2015-2018
 * Line chart: Average Band D council tax in England, change since 2010
 
+## R scripts
+
+* [R notebook detailing the process of downloading, cleaning, and analysing council accounts](https://github.com/BBC-Data-Unit/council-reserves/blob/master/3estimate_vs_spend.Rmd)
+* [R notebook detailing the process of analysing council accounts in order to arrive at a measure of 'resilience'](https://github.com/BBC-Data-Unit/council-reserves/blob/master/4resiliencetest.Rmd)
+
 ## Methodology
 
-* CIPFA: [Measured resilience in English authorities (PDF)](https://www.cipfa.org/policy-and-guidance/reports/measured-resilience-in-english-authorities)
+* CIPFA: [Measured resilience in English authorities (PDF)](https://www.cipfa.org/policy-and-guidance/reports/measured-resilience-in-english-authorities) - [cached here](https://github.com/BBC-Data-Unit/council-reserves/blob/master/CIPFA_methodology.pdf)
