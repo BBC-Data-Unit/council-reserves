@@ -13,9 +13,7 @@ Croydon Council appeared to have spent more than half of its reserves but said t
 ## Get the data 
 
 * Ministry of Housing, Communities & Local Government: [Local authority revenue expenditure and financing](https://www.gov.uk/government/collections/local-authority-revenue-expenditure-and-financing)
-* CSV: [Unallocated reserves by council, combined](https://github.com/BBC-Data-Unit/council-reserves/blob/master/combined.data-unallocated.csv)
 * CSV: [Council accounts analysis](https://github.com/BBC-Data-Unit/council-reserves/blob/master/councilaccountsanalysis.csv)
-* CSV: [Cut in reserves](https://github.com/BBC-Data-Unit/council-reserves/blob/master/reserves.cut.csv)
 * XLSX: [Change in useable reserves between March 2015 and March 2018](https://github.com/BBC-Data-Unit/council-reserves/blob/master/reserveschangeshare.xlsx)
 
 ## Quotes and interviews
