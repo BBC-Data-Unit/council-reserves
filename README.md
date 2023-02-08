@@ -47,3 +47,11 @@ Croydon Council appeared to have spent more than half of its reserves but said t
 ## Methodology
 
 * CIPFA: [Measured resilience in English authorities (PDF)](https://www.cipfa.org/policy-and-guidance/reports/measured-resilience-in-english-authorities) - [cached here](https://github.com/BBC-Data-Unit/council-reserves/blob/master/CIPFA_methodology.pdf)
+
+
+## Related repos
+
+We have also looked at council finances in the following stories:
+
+* 2020: [*UK councils fear bankruptcy amid Covid-19 costs*](https://github.com/BBC-Data-Unit/council_covid_bankrupt) 
+* 2021: [*Pandemic leaves councils with £3bn black hole*](https://github.com/BBC-Data-Unit/Council_cuts_during_the_pandemic/)
